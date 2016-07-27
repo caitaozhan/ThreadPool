@@ -17,8 +17,8 @@ class ThreadPool
 public:
 	ThreadPool(size_t n);
 
-	template<typename T, typename ...Args>
-	auto enqueue(T && t, Args && ... args) -> future<typename result_of<T(Args ...)>::type>;  // add threads to the thread pool
+	template<typename F, typename ...Args>
+	auto enqueue(F && f, Args && ... args) -> future<typename result_of<F(Args ...)>::type>;  // add threads to the thread pool
 
 	~ThreadPool();
 private:
@@ -32,13 +32,13 @@ private:
 };
 
 // add a new thread to the thread pool
-template<typename T, typename ...Args>
-inline auto ThreadPool::enqueue(T && t, Args && ...args) -> future<typename result_of<T(Args ...)>::type>
+template<typename F, typename ...Args>
+inline auto ThreadPool::enqueue(F && f, Args && ...args) -> future<typename result_of<F(Args ...)>::type>
 {
-	using return_type = typename result_of<T(Args...)>::type;  // duduce the return type
+	using return_type = typename result_of<F(Args...)>::type;  // result_of: duduce the return type
 
 	auto task = make_shared<packaged_task<return_type()>>(
-		bind(forward<T>(t), forward<Args>(args)...)
+		bind(forward<F>(f), forward<Args>(args)...)
 		);
 
 	future<return_type> result = task->get_future();
