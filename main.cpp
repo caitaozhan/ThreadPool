@@ -11,7 +11,7 @@ using namespace chrono;
 int main()
 {
 	ThreadPool pool(4);                 // a pool that run 4 threads concurrently
-	vector<future<string>> results;     // the results of threads
+	vector<future<string>> results;     // the results oT threads
 	
 	for (int i = 0; i < 8; ++i)         // start 8 tasks
 	{
