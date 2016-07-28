@@ -35,12 +35,14 @@ private:
 template<typename F, typename ...Args>
 inline auto ThreadPool::enqueue(F && f, Args && ...args) -> future<typename result_of<F(Args ...)>::type>
 {
-	using return_type = typename result_of<F(Args...)>::type;  // result_of: duduce the return type
+	// result_of: duduce the return type(the result type of future<?>) while compiling. In this case, it is string
+	using return_type = typename result_of<F(Args...)>::type;  
 
+	// "task" is a "shared_ptr" that points to "packaged_task<string()>", "return_type" == "string"
+	// the "bind" stuff initializes "string()", which is a function that with no param and returns a string
 	auto task = make_shared<packaged_task<return_type()>>(
 		bind(forward<F>(f), forward<Args>(args)...)
 		);
-
 	future<return_type> result = task->get_future();
 
 	{// critical area
@@ -52,8 +54,9 @@ inline auto ThreadPool::enqueue(F && f, Args && ...args) -> future<typename resu
 		}
 
 		m_tasks.emplace([task] {(*task)(); });  // put the thread in the queue
+		// cout << "-> number of tasks: " << m_tasks.size() << endl;
 	}
 
-	m_condition.notify_one();
+	m_condition.notify_one();                   // wake up one thread in the Thread pool
 	return result;
 }
